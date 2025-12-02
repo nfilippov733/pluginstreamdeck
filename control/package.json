@@ -18,6 +18,7 @@
     },
     "dependencies": {
         "@elgato/streamdeck": "^1.0.0",
+        "open": "^11.0.0",
         "spotify-node-applescript": "^1.1.1"
     }
 }

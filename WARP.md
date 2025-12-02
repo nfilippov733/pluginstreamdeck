@@ -4,11 +4,39 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Current repository state
 
-As of this version, the repository only contains Git metadata (the `.git` directory) and no source code, configuration files, or documentation such as `README.md`, `package.json`, `pyproject.toml`, `Cargo.toml`, or similar.
+This is a Stream Deck plugin for controlling Spotify on macOS. The plugin uses the Spotify Web API for reliable playlist playback control.
 
-Because there is no implementation yet, there are no project-specific commands for building, linting, or running tests, and there is no architecture to summarize.
+## Spotify Developer Setup
 
-Future Warp agents should treat this file as a bootstrap guide and update it once real code and tooling are added.
+**Required for first-time setup:**
+
+1. Go to [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)
+2. Log in with your Spotify account
+3. Click **Create App**
+4. Fill in:
+   - App name: `Stream Deck Controller` (or any name)
+   - Redirect URI: `http://localhost:8888/callback`
+   - Select **Web API**
+5. Save the **Client ID** - you'll paste this into the Stream Deck Property Inspector when configuring the plugin
+
+## Project Commands
+
+```bash
+# Navigate to the control directory
+cd control
+
+# Install dependencies
+npm install
+
+# Build and watch for changes
+npm run watch
+
+# Link plugin to Stream Deck (first time only)
+streamdeck link com.spotify-macos.control.sdPlugin
+
+# Restart plugin after changes
+streamdeck restart com.spotify-macos.control
+```
 
 ## How to infer and document project commands (for future agents)
 

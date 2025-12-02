@@ -5,25 +5,227 @@
     <title>Play Playlist</title>
     <link rel="stylesheet" href="https://sdpi-components.dev/releases/v3/sdpi-components.css">
     <script src="https://sdpi-components.dev/releases/v3/sdpi-components.js"></script>
+    <style>
+        .auth-section { margin-bottom: 16px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; }
+        .refresh-btn { cursor: pointer; margin-left: 8px; font-size: 12px; }
+        .status { font-size: 11px; color: #999; margin-top: 4px; }
+        .status.success { color: #4CAF50; }
+        .status.error { color: #f44336; }
+    </style>
 </head>
 <body>
-    <sdpi-item label="Playlist Name">
-        <sdpi-textfield setting="playlistName" placeholder="My Playlist"></sdpi-textfield>
+    <!-- Authentication Section -->
+    <div class="auth-section">
+        <sdpi-item label="Spotify Client ID">
+            <sdpi-textfield id="clientId" placeholder="Paste your Client ID"></sdpi-textfield>
+        </sdpi-item>
+        <sdpi-item label="">
+            <button id="authBtn" class="sdpi-item-value">Connect to Spotify</button>
+        </sdpi-item>
+        <div id="authStatus" class="status"></div>
+    </div>
+
+    <!-- Playlist Dropdown -->
+    <sdpi-item label="Playlist">
+        <select id="playlistSelect" class="sdpi-item-value">
+            <option value="">-- Select Playlist --</option>
+        </select>
+        <span class="refresh-btn" id="refreshPlaylists">🔄</span>
     </sdpi-item>
 
-    <sdpi-item label="Playlist URI">
-        <sdpi-textfield setting="playlistUri" placeholder="spotify:playlist:xxxxx"></sdpi-textfield>
+    <!-- Device Dropdown -->
+    <sdpi-item label="Play On">
+        <select id="deviceSelect" class="sdpi-item-value">
+            <option value="">-- Default Device --</option>
+        </select>
+        <span class="refresh-btn" id="refreshDevices">🔄</span>
     </sdpi-item>
 
-    <details>
-        <summary>How to get Playlist URI</summary>
-        <p style="padding: 8px; font-size: 11px;">
-            1. Open Spotify<br>
-            2. Right-click on a playlist<br>
-            3. Share → Copy Spotify URI<br>
-            4. Paste it above
-        </p>
-    </details>
+    <div class="status" id="loadStatus"></div>
+
+    <script>
+        let websocket = null;
+        let uuid = null;
+        let settings = {};
+
+        // Connect to Stream Deck
+        function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+            uuid = inPropertyInspectorUUID;
+            const actionInfo = JSON.parse(inActionInfo);
+            settings = actionInfo.payload.settings || {};
+
+            websocket = new WebSocket(`ws://127.0.0.1:${inPort}`);
+            
+            websocket.onopen = () => {
+                websocket.send(JSON.stringify({
+                    event: inRegisterEvent,
+                    uuid: inPropertyInspectorUUID
+                }));
+
+                // Load saved client ID
+                const savedClientId = localStorage.getItem('spotify_client_id');
+                if (savedClientId) {
+                    document.getElementById('clientId').value = savedClientId;
+                    loadPlaylists();
+                    loadDevices();
+                }
+
+                // Restore selected values
+                if (settings.playlistUri) {
+                    document.getElementById('playlistSelect').value = settings.playlistUri;
+                }
+                if (settings.deviceId) {
+                    document.getElementById('deviceSelect').value = settings.deviceId;
+                }
+            };
+
+            websocket.onmessage = (evt) => {
+                const data = JSON.parse(evt.data);
+                
+                if (data.event === "sendToPropertyInspector") {
+                    handlePluginMessage(data.payload);
+                }
+            };
+        }
+
+        function handlePluginMessage(payload) {
+            const status = document.getElementById('loadStatus');
+
+            switch (payload.event) {
+                case "playlists":
+                    populatePlaylistDropdown(payload.playlists);
+                    status.textContent = `Loaded ${payload.playlists.length} playlists`;
+                    status.className = "status success";
+                    break;
+
+                case "devices":
+                    populateDeviceDropdown(payload.devices);
+                    status.textContent = `Found ${payload.devices.length} devices`;
+                    status.className = "status success";
+                    break;
+
+                case "authenticated":
+                    document.getElementById('authStatus').textContent = "✓ Connected!";
+                    document.getElementById('authStatus').className = "status success";
+                    loadPlaylists();
+                    loadDevices();
+                    break;
+
+                case "error":
+                    status.textContent = payload.message;
+                    status.className = "status error";
+                    break;
+            }
+        }
+
+        function populatePlaylistDropdown(playlists) {
+            const select = document.getElementById('playlistSelect');
+            select.innerHTML = '<option value="">-- Select Playlist --</option>';
+            
+            playlists.forEach(playlist => {
+                const option = document.createElement('option');
+                option.value = playlist.uri;
+                option.textContent = playlist.name;
+                option.dataset.name = playlist.name;
+                option.dataset.image = playlist.images[0]?.url || '';
+                select.appendChild(option);
+            });
+
+            // Restore selection
+            if (settings.playlistUri) {
+                select.value = settings.playlistUri;
+            }
+        }
+
+        function populateDeviceDropdown(devices) {
+            const select = document.getElementById('deviceSelect');
+            select.innerHTML = '<option value="">-- Default Device --</option>';
+            
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.id;
+                option.textContent = `${device.name} (${device.type})${device.is_active ? ' ●' : ''}`;
+                option.dataset.name = device.name;
+                select.appendChild(option);
+            });
+
+            if (settings.deviceId) {
+                select.value = settings.deviceId;
+            }
+        }
+
+        function sendToPlugin(payload) {
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    event: "sendToPlugin",
+                    action: "com.spotify-macos.control.play-playlist",
+                    context: uuid,
+                    payload: payload
+                }));
+            }
+        }
+
+        function saveSettings(newSettings) {
+            settings = { ...settings, ...newSettings };
+            
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    event: "setSettings",
+                    context: uuid,
+                    payload: settings
+                }));
+            }
+        }
+
+        function loadPlaylists() {
+            sendToPlugin({ event: "getPlaylists" });
+        }
+
+        function loadDevices() {
+            sendToPlugin({ event: "getDevices" });
+        }
+
+        // Event Listeners
+        document.getElementById('authBtn').addEventListener('click', () => {
+            const clientId = document.getElementById('clientId').value.trim();
+            if (!clientId) {
+                document.getElementById('authStatus').textContent = "Please enter Client ID";
+                document.getElementById('authStatus').className = "status error";
+                return;
+            }
+            
+            localStorage.setItem('spotify_client_id', clientId);
+            document.getElementById('authStatus').textContent = "Opening browser...";
+            
+            // Save client ID to global settings
+            websocket.send(JSON.stringify({
+                event: "setGlobalSettings",
+                context: uuid,
+                payload: { clientId }
+            }));
+
+            sendToPlugin({ event: "authenticate", payload: { clientId } });
+        });
+
+        document.getElementById('playlistSelect').addEventListener('change', (e) => {
+            const option = e.target.selectedOptions[0];
+            saveSettings({
+                playlistUri: e.target.value,
+                playlistName: option?.dataset.name || '',
+                playlistImage: option?.dataset.image || ''
+            });
+        });
+
+        document.getElementById('deviceSelect').addEventListener('change', (e) => {
+            const option = e.target.selectedOptions[0];
+            saveSettings({
+                deviceId: e.target.value,
+                deviceName: option?.dataset.name || ''
+            });
+        });
+
+        document.getElementById('refreshPlaylists').addEventListener('click', loadPlaylists);
+        document.getElementById('refreshDevices').addEventListener('click', loadDevices);
+    </script>
 </body>
 </html>
-
