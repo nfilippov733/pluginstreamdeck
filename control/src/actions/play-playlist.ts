@@ -13,7 +13,10 @@ export class PlayPlaylistAction extends SingletonAction {
 
         const script = `
             tell application "Spotify"
-                play track "${playlistUri}"
+                activate
+                open location "${playlistUri}"
+                delay 0.5
+                play
             end tell
         `;
 
