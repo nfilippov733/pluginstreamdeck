@@ -46,7 +46,7 @@ export async function startAuthFlow(clientId: string): Promise<void> {
 
     return new Promise((resolve, reject) => {
         const server = http.createServer(async (req, res) => {
-            const url = new URL(req.url!, `http://localhost:8888`);
+            const url = new URL(req.url!, `http://localhost:3000`);
             
             if (url.pathname === "/callback") {
                 const code = url.searchParams.get("code");
@@ -77,7 +77,7 @@ export async function startAuthFlow(clientId: string): Promise<void> {
             }
         });
 
-        server.listen(8888, () => {
+        server.listen(3000, () => {
             const authUrl = new URL(SPOTIFY_AUTH_URL);
             authUrl.searchParams.set("client_id", clientId);
             authUrl.searchParams.set("response_type", "code");
