@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Play Playlist</title>
+    <link rel="stylesheet" href="https://sdpi-components.dev/releases/v3/sdpi-components.css">
+    <script src="https://sdpi-components.dev/releases/v3/sdpi-components.js"></script>
+</head>
+<body>
+    <sdpi-item label="Playlist Name">
+        <sdpi-textfield setting="playlistName" placeholder="My Playlist"></sdpi-textfield>
+    </sdpi-item>
+
+    <sdpi-item label="Playlist URI">
+        <sdpi-textfield setting="playlistUri" placeholder="spotify:playlist:xxxxx"></sdpi-textfield>
+    </sdpi-item>
+
+    <details>
+        <summary>How to get Playlist URI</summary>
+        <p style="padding: 8px; font-size: 11px;">
+            1. Open Spotify<br>
+            2. Right-click on a playlist<br>
+            3. Share → Copy Spotify URI<br>
+            4. Paste it above
+        </p>
+    </details>
+</body>
+</html>
+

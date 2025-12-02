@@ -1,47 +1,44 @@
 {
-	"Name": "Spotify MacOs",
-	"Version": "0.1.0.0",
-	"Author": "Nikita Filippov",
-	"Actions": [
-		{
-			"Name": "Counter",
-			"UUID": "com.spotify-macos.control.increment",
-			"Icon": "imgs/actions/counter/icon",
-			"Tooltip": "Displays a count, which increments by one on press.",
-			"PropertyInspectorPath": "ui/increment-counter.html",
-			"Controllers": [
-				"Keypad"
-			],
-			"States": [
-				{
-					"Image": "imgs/actions/counter/key",
-					"TitleAlignment": "middle"
-				}
-			]
-		}
-	],
-	"Category": "Spotify MacOs",
-	"CategoryIcon": "imgs/plugin/category-icon",
-	"CodePath": "bin/plugin.js",
-	"Description": "Spotify Controls for Mac OS to manage playlists",
-	"Icon": "imgs/plugin/marketplace",
-	"SDKVersion": 2,
-	"Software": {
-		"MinimumVersion": "6.5"
-	},
-	"OS": [
-		{
-			"Platform": "mac",
-			"MinimumVersion": "12"
-		},
-		{
-			"Platform": "windows",
-			"MinimumVersion": "10"
-		}
-	],
-	"Nodejs": {
-		"Version": "20",
-		"Debug": "enabled"
-	},
-	"UUID": "com.spotify-macos.control"
+    "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+    "UUID": "com.spotify-macos.control",
+    "Name": "Spotify MacOs",
+    "Version": "1.0.0",
+    "Author": "Nikita Filippov",
+    "Description": "Spotify Controls for Mac OS to manage playlists",
+    "Category": "Spotify MacOs",
+    "CategoryIcon": "imgs/category-icon",
+    "Icon": "imgs/plugin-icon",
+    "CodePath": "bin/plugin.js",
+    "SDKVersion": 2,
+    "Software": {
+        "MinimumVersion": "6.6"
+    },
+    "OS": [
+        {
+            "Platform": "mac",
+            "MinimumVersion": "10.15"
+        }
+    ],
+    "Nodejs": {
+        "Version": "20",
+        "Debug": "enabled"
+    },
+    "Actions": [
+        {
+            "Name": "Play Playlist",
+            "UUID": "com.spotify-macos.control.play-playlist",
+            "Icon": "imgs/actions/playlist/icon",
+            "Tooltip": "Play a Spotify playlist",
+            "Controllers": [
+                "Keypad"
+            ],
+            "States": [
+                {
+                    "Image": "imgs/actions/playlist/key",
+                    "TitleAlignment": "bottom"
+                }
+            ],
+            "PropertyInspectorPath": "ui/play-playlist.html"
+        }
+    ]
 }
