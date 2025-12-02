@@ -6,7 +6,7 @@ import { webcrypto } from "crypto";
 
 const SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
-const REDIRECT_URI = "http://localhost:3000/callback";
+const REDIRECT_URI = "http://127.0.0.1:3000/callback";
 const SCOPES = [
     "playlist-read-private",
     "playlist-read-collaborative",
@@ -46,7 +46,7 @@ export async function startAuthFlow(clientId: string): Promise<void> {
 
     return new Promise((resolve, reject) => {
         const server = http.createServer(async (req, res) => {
-            const url = new URL(req.url!, `http://localhost:3000`);
+            const url = new URL(req.url!, `http://127.0.0.1:3000`);
             
             if (url.pathname === "/callback") {
                 const code = url.searchParams.get("code");

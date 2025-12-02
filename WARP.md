@@ -15,7 +15,7 @@ This is a Stream Deck plugin for controlling Spotify on macOS. The plugin uses t
 3. Click **Create App**
 4. Fill in:
    - App name: `Stream Deck Controller` (or any name)
-   - Redirect URI: `http://localhost:3000/callback`
+   - Redirect URI: `http://127.0.0.1:3000/callback` (note: use 127.0.0.1, not localhost)
    - Select **Web API**
 5. Save the **Client ID** - you'll paste this into the Stream Deck Property Inspector when configuring the plugin
 
