@@ -15,7 +15,7 @@ export class PlayPlaylistAction extends SingletonAction {
             tell application "Spotify"
                 activate
                 open location "${playlistUri}"
-                delay 0.5
+                delay 2
                 play
             end tell
         `;
