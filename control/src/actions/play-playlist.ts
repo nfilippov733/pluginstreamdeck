@@ -14,15 +14,20 @@ export class PlayPlaylistAction extends SingletonAction {
         const script = `
             tell application "Spotify"
                 activate
-                open location "${playlistUri}"
-                delay 2
-                play
+                delay 1
+                play track "${playlistUri}"
             end tell
         `;
 
-        exec(`osascript -e '${script}'`, (error) => {
+        exec(`osascript -e '${script}'`, (error, stdout, stderr) => {
             if (error) {
-                console.error("Failed to play playlist:", error);
+                console.error("Failed to play playlist (error):", error);
+            }
+            if (stderr) {
+                console.error("Failed to play playlist (stderr):", stderr);
+            }
+            if (stdout) {
+                console.log("Play playlist (stdout):", stdout);
             }
         });
     }
