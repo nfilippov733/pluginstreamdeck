@@ -11,6 +11,25 @@
         .status { font-size: 11px; color: #999; margin-top: 4px; }
         .status.success { color: #4CAF50; }
         .status.error { color: #f44336; }
+        .playlist-preview { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin: 12px 0; 
+            padding: 8px; 
+            background: rgba(255,255,255,0.03); 
+            border-radius: 4px; 
+        }
+        .playlist-preview img { 
+            width: 64px; 
+            height: 64px; 
+            border-radius: 4px; 
+            object-fit: cover;
+            background: rgba(255,255,255,0.1);
+        }
+        .playlist-preview .info { font-size: 12px; color: #ccc; }
+        .playlist-preview .info .name { font-weight: bold; color: #fff; margin-bottom: 4px; }
+        .playlist-preview.hidden { display: none; }
     </style>
 </head>
 <body>
@@ -32,6 +51,15 @@
         </select>
         <span class="refresh-btn" id="refreshPlaylists">🔄</span>
     </sdpi-item>
+
+    <!-- Playlist Preview -->
+    <div class="playlist-preview hidden" id="playlistPreview">
+        <img id="playlistPreviewImg" src="" alt="Playlist cover">
+        <div class="info">
+            <div class="name" id="playlistPreviewName">--</div>
+            <div>Selected playlist</div>
+        </div>
+    </div>
 
     <!-- Device Dropdown -->
     <sdpi-item label="Play On">
@@ -62,12 +90,10 @@
                     uuid: inPropertyInspectorUUID
                 }));
 
-                // Load saved client ID
+                // Pre-fill client ID from localStorage as fallback
                 const savedClientId = localStorage.getItem('spotify_client_id');
                 if (savedClientId) {
                     document.getElementById('clientId').value = savedClientId;
-                    loadPlaylists();
-                    loadDevices();
                 }
 
                 // Restore selected values
@@ -77,6 +103,9 @@
                 if (settings.deviceId) {
                     document.getElementById('deviceSelect').value = settings.deviceId;
                 }
+
+                // Request auth status from plugin to determine if we should show/hide auth section
+                sendToPlugin({ event: "getAuthStatus" });
             };
 
             websocket.onmessage = (evt) => {
@@ -90,8 +119,36 @@
 
         function handlePluginMessage(payload) {
             const status = document.getElementById('loadStatus');
+            const authSection = document.querySelector('.auth-section');
 
             switch (payload.event) {
+                case "authStatus":
+                    if (payload.authenticated) {
+                        // Hide auth section when already connected
+                        authSection.style.display = 'none';
+                        document.getElementById('authStatus').textContent = "✓ Connected";
+                        document.getElementById('authStatus').className = "status success";
+                        
+                        // Sync client ID if provided
+                        if (payload.clientId) {
+                            localStorage.setItem('spotify_client_id', payload.clientId);
+                            document.getElementById('clientId').value = payload.clientId;
+                        }
+                        
+                        // Auto-load playlists and devices
+                        loadPlaylists();
+                        loadDevices();
+                    } else {
+                        // Show auth section when not connected
+                        authSection.style.display = 'block';
+                        
+                        // Pre-fill client ID if available
+                        if (payload.clientId) {
+                            document.getElementById('clientId').value = payload.clientId;
+                        }
+                    }
+                    break;
+
                 case "playlists":
                     populatePlaylistDropdown(payload.playlists);
                     status.textContent = `Loaded ${payload.playlists.length} playlists`;
@@ -105,6 +162,8 @@
                     break;
 
                 case "authenticated":
+                    // Hide auth section after successful authentication
+                    authSection.style.display = 'none';
                     document.getElementById('authStatus').textContent = "✓ Connected!";
                     document.getElementById('authStatus').className = "status success";
                     loadPlaylists();
@@ -131,9 +190,16 @@
                 select.appendChild(option);
             });
 
-            // Restore selection
+            // Restore selection and show preview if already selected
             if (settings.playlistUri) {
                 select.value = settings.playlistUri;
+                const selectedOption = select.selectedOptions[0];
+                if (selectedOption) {
+                    updatePlaylistPreview(
+                        selectedOption.dataset.name || settings.playlistName || '',
+                        selectedOption.dataset.image || ''
+                    );
+                }
             }
         }
 
@@ -209,12 +275,32 @@
 
         document.getElementById('playlistSelect').addEventListener('change', (e) => {
             const option = e.target.selectedOptions[0];
+            const imageUrl = option?.dataset.image || '';
+            const name = option?.dataset.name || '';
+            
             saveSettings({
                 playlistUri: e.target.value,
-                playlistName: option?.dataset.name || '',
-                playlistImage: option?.dataset.image || ''
+                playlistName: name,
+                playlistImage: imageUrl
             });
+            
+            // Update playlist preview
+            updatePlaylistPreview(name, imageUrl);
         });
+        
+        function updatePlaylistPreview(name, imageUrl) {
+            const preview = document.getElementById('playlistPreview');
+            const previewImg = document.getElementById('playlistPreviewImg');
+            const previewName = document.getElementById('playlistPreviewName');
+            
+            if (name && imageUrl) {
+                previewImg.src = imageUrl;
+                previewName.textContent = name;
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
 
         document.getElementById('deviceSelect').addEventListener('change', (e) => {
             const option = e.target.selectedOptions[0];

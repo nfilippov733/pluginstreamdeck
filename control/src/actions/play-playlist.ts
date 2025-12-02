@@ -27,7 +27,7 @@ export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
         }
 
         try {
-            // If it's already a data URL, use it directly
+            // If it's already a data URL, use it directly (cached)
             if (image.startsWith("data:image")) {
                 await ev.action.setImage(image);
                 return;
@@ -47,6 +47,12 @@ export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
                 const dataUrl = `data:${contentType};base64,${base64}`;
 
                 await ev.action.setImage(dataUrl);
+                
+                // Cache the base64 image in settings to avoid re-fetching on subsequent appearances
+                await ev.action.setSettings({
+                    ...settings,
+                    playlistImage: dataUrl,
+                });
                 return;
             }
 
@@ -82,9 +88,20 @@ export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
     // Handle messages from Property Inspector
     override async onSendToPlugin(ev: SendToPluginEvent<any, PlaylistSettings>) {
         const { event, payload } = ev.payload as any;
-        const globalSettings = await streamDeck.settings.getGlobalSettings<{ clientId: string }>();
+        const globalSettings = await streamDeck.settings.getGlobalSettings<{ clientId: string; tokens?: any }>();
 
         switch (event) {
+            case "getAuthStatus":
+                // Check if we have valid tokens stored
+                await loadTokensFromSettings();
+                const authenticated = isAuthenticated();
+                await streamDeck.ui.current?.sendToPropertyInspector({
+                    event: "authStatus",
+                    authenticated,
+                    clientId: globalSettings.clientId || "",
+                });
+                break;
+
             case "getPlaylists":
                 try {
                     const playlists = await getUserPlaylists(globalSettings.clientId);
@@ -116,6 +133,15 @@ export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
                 break;
 
             case "authenticate":
+                // If already authenticated, just send success without opening browser
+                await loadTokensFromSettings();
+                if (isAuthenticated()) {
+                    await streamDeck.ui.current?.sendToPropertyInspector({
+                        event: "authenticated",
+                    });
+                    break;
+                }
+                
                 try {
                     await startAuthFlow(payload.clientId);
                     await streamDeck.ui.current?.sendToPropertyInspector({
