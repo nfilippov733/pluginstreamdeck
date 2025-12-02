@@ -29,3 +29,65 @@ export interface PlaylistSettings {
     [key: string]: any;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Playback state types (GET /me/player)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface PlaybackArtist {
+    id: string;
+    name: string;
+    uri: string;
+}
+
+export interface PlaybackAlbum {
+    id: string;
+    name: string;
+    uri: string;
+    images: { url: string; height: number; width: number }[];
+}
+
+export interface PlaybackTrack {
+    id: string;
+    name: string;
+    uri: string;
+    duration_ms: number;
+    artists: PlaybackArtist[];
+    album: PlaybackAlbum;
+}
+
+export interface PlaybackDevice {
+    id: string;
+    name: string;
+    type: string;
+    is_active: boolean;
+    volume_percent: number | null;
+}
+
+export interface PlaybackState {
+    is_playing: boolean;
+    progress_ms: number | null;
+    device: PlaybackDevice;
+    shuffle_state: boolean;
+    repeat_state: "off" | "track" | "context";
+    item: PlaybackTrack | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Settings for playback actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface PlaybackActionSettings {
+    deviceId?: string;
+    deviceName?: string;
+    [key: string]: any;
+}
+
+export interface VolumeActionSettings extends PlaybackActionSettings {
+    step?: number; // default 10
+}
+
+export interface VolumePresetSettings extends PlaybackActionSettings {
+    volumePercent?: number; // e.g. 25 for narration, 65 for combat
+    presetName?: string;
+}
+

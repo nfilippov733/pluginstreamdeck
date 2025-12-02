@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Volume Step</title>
+    <link rel="stylesheet" href="https://sdpi-components.dev/releases/v3/sdpi-components.css">
+    <script src="https://sdpi-components.dev/releases/v3/sdpi-components.js"></script>
+    <style>
+        .info { font-size: 11px; color: #999; margin-top: 4px; padding: 0 8px; }
+    </style>
+</head>
+<body>
+    <sdpi-item label="Volume Step (%)">
+        <sdpi-textfield id="stepInput" type="number" min="1" max="50" placeholder="10"></sdpi-textfield>
+    </sdpi-item>
+    <div class="info">Amount to increase/decrease volume per press (1–50). Default: 10</div>
+
+    <script>
+        let websocket = null;
+        let uuid = null;
+        let settings = {};
+
+        function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+            uuid = inPropertyInspectorUUID;
+            const actionInfo = JSON.parse(inActionInfo);
+            settings = actionInfo.payload.settings || {};
+
+            websocket = new WebSocket(`ws://127.0.0.1:${inPort}`);
+
+            websocket.onopen = () => {
+                websocket.send(JSON.stringify({
+                    event: inRegisterEvent,
+                    uuid: inPropertyInspectorUUID
+                }));
+
+                // Restore saved step value
+                const stepInput = document.getElementById('stepInput');
+                stepInput.value = settings.step ?? 10;
+            };
+        }
+
+        function saveSettings(newSettings) {
+            settings = { ...settings, ...newSettings };
+
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    event: "setSettings",
+                    context: uuid,
+                    payload: settings
+                }));
+            }
+        }
+
+        document.getElementById('stepInput').addEventListener('change', (e) => {
+            let value = parseInt(e.target.value, 10);
+            if (isNaN(value) || value < 1) value = 1;
+            if (value > 50) value = 50;
+            e.target.value = value;
+            saveSettings({ step: value });
+        });
+    </script>
+</body>
+</html>
+

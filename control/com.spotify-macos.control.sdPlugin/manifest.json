@@ -29,9 +29,7 @@
             "UUID": "com.spotify-macos.control.play-playlist",
             "Icon": "imgs/actions/playlist/icon",
             "Tooltip": "Play a Spotify playlist",
-            "Controllers": [
-                "Keypad"
-            ],
+            "Controllers": ["Keypad"],
             "States": [
                 {
                     "Image": "imgs/actions/playlist/key",
@@ -39,6 +37,87 @@
                 }
             ],
             "PropertyInspectorPath": "ui/play-playlist.html"
+        },
+        {
+            "Name": "Play / Pause",
+            "UUID": "com.spotify-macos.control.play-pause",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Toggle playback (play/pause)",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/counter/key",
+                    "TitleAlignment": "middle"
+                }
+            ]
+        },
+        {
+            "Name": "Next Track",
+            "UUID": "com.spotify-macos.control.next-track",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Skip to the next track",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/counter/key",
+                    "TitleAlignment": "middle"
+                }
+            ]
+        },
+        {
+            "Name": "Previous Track",
+            "UUID": "com.spotify-macos.control.previous-track",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Go to the previous track",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/counter/key",
+                    "TitleAlignment": "middle"
+                }
+            ]
+        },
+        {
+            "Name": "Volume Up",
+            "UUID": "com.spotify-macos.control.volume-up",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Increase Spotify volume",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/counter/key",
+                    "TitleAlignment": "middle"
+                }
+            ],
+            "PropertyInspectorPath": "ui/volume-step.html"
+        },
+        {
+            "Name": "Volume Down",
+            "UUID": "com.spotify-macos.control.volume-down",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Decrease Spotify volume",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/counter/key",
+                    "TitleAlignment": "middle"
+                }
+            ],
+            "PropertyInspectorPath": "ui/volume-step.html"
+        },
+        {
+            "Name": "Volume Preset",
+            "UUID": "com.spotify-macos.control.volume-preset",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Set volume to a preset level",
+            "Controllers": ["Keypad"],
+            "States": [
+                {
+                    "Image": "imgs/actions/counter/key",
+                    "TitleAlignment": "middle"
+                }
+            ],
+            "PropertyInspectorPath": "ui/volume-preset.html"
         }
     ]
 }

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Volume Preset</title>
+    <link rel="stylesheet" href="https://sdpi-components.dev/releases/v3/sdpi-components.css">
+    <script src="https://sdpi-components.dev/releases/v3/sdpi-components.js"></script>
+    <style>
+        .info { font-size: 11px; color: #999; margin-top: 4px; padding: 0 8px; }
+        .preset-buttons { display: flex; gap: 8px; padding: 8px; }
+        .preset-buttons button { flex: 1; padding: 6px 8px; font-size: 11px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <sdpi-item label="Preset Name">
+        <sdpi-textfield id="presetName" placeholder="e.g. Narration"></sdpi-textfield>
+    </sdpi-item>
+    <div class="info">Label shown on the Stream Deck key.</div>
+
+    <sdpi-item label="Volume (%)">
+        <sdpi-textfield id="volumePercent" type="number" min="0" max="100" placeholder="50"></sdpi-textfield>
+    </sdpi-item>
+    <div class="info">Target volume level when pressed (0–100).</div>
+
+    <div class="preset-buttons">
+        <button id="presetNarration">Narration (25%)</button>
+        <button id="presetCombat">Combat (65%)</button>
+    </div>
+
+    <script>
+        let websocket = null;
+        let uuid = null;
+        let settings = {};
+
+        function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
+            uuid = inPropertyInspectorUUID;
+            const actionInfo = JSON.parse(inActionInfo);
+            settings = actionInfo.payload.settings || {};
+
+            websocket = new WebSocket(`ws://127.0.0.1:${inPort}`);
+
+            websocket.onopen = () => {
+                websocket.send(JSON.stringify({
+                    event: inRegisterEvent,
+                    uuid: inPropertyInspectorUUID
+                }));
+
+                // Restore saved values
+                document.getElementById('presetName').value = settings.presetName ?? '';
+                document.getElementById('volumePercent').value = settings.volumePercent ?? 50;
+            };
+        }
+
+        function saveSettings(newSettings) {
+            settings = { ...settings, ...newSettings };
+
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    event: "setSettings",
+                    context: uuid,
+                    payload: settings
+                }));
+            }
+        }
+
+        document.getElementById('presetName').addEventListener('change', (e) => {
+            saveSettings({ presetName: e.target.value.trim() });
+        });
+
+        document.getElementById('volumePercent').addEventListener('change', (e) => {
+            let value = parseInt(e.target.value, 10);
+            if (isNaN(value) || value < 0) value = 0;
+            if (value > 100) value = 100;
+            e.target.value = value;
+            saveSettings({ volumePercent: value });
+        });
+
+        // Quick preset buttons
+        document.getElementById('presetNarration').addEventListener('click', () => {
+            document.getElementById('presetName').value = 'Narration';
+            document.getElementById('volumePercent').value = 25;
+            saveSettings({ presetName: 'Narration', volumePercent: 25 });
+        });
+
+        document.getElementById('presetCombat').addEventListener('click', () => {
+            document.getElementById('presetName').value = 'Combat';
+            document.getElementById('volumePercent').value = 65;
+            saveSettings({ presetName: 'Combat', volumePercent: 65 });
+        });
+    </script>
+</body>
+</html>
+
