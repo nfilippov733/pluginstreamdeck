@@ -1,9 +1,10 @@
 import streamDeck, {
     action,
+    DidReceiveSettingsEvent,
     KeyDownEvent,
+    SendToPluginEvent,
     SingletonAction,
     WillAppearEvent,
-    SendToPluginEvent,
 } from "@elgato/streamdeck";
 import { PlaylistSettings } from "../spotify/types";
 import { playPlaylist, getUserPlaylists, getDevices } from "../spotify/api";
@@ -13,54 +14,11 @@ import { startAuthFlow, isAuthenticated, loadTokensFromSettings } from "../spoti
 export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
     
     override async onWillAppear(ev: WillAppearEvent<PlaylistSettings>) {
-        const settings = ev.payload.settings;
+        await this.updateKeyAppearance(ev.action, ev.payload.settings ?? {});
+    }
 
-        // Set button title
-        if (settings.playlistName) {
-            await ev.action.setTitle(settings.playlistName);
-        }
-
-        // Set playlist image if available
-        const image = settings.playlistImage;
-        if (!image) {
-            return;
-        }
-
-        try {
-            // If it's already a data URL, use it directly (cached)
-            if (image.startsWith("data:image")) {
-                await ev.action.setImage(image);
-                return;
-            }
-
-            // If it's an HTTP(S) URL from Spotify, fetch and convert to base64 data URL
-            if (image.startsWith("http://") || image.startsWith("https://")) {
-                const response = await fetch(image);
-                if (!response.ok) {
-                    console.error("Failed to fetch playlist image:", response.status, response.statusText);
-                    return;
-                }
-
-                const arrayBuffer = await response.arrayBuffer();
-                const base64 = Buffer.from(arrayBuffer).toString("base64");
-                const contentType = response.headers.get("content-type") || "image/jpeg";
-                const dataUrl = `data:${contentType};base64,${base64}`;
-
-                await ev.action.setImage(dataUrl);
-                
-                // Cache the base64 image in settings to avoid re-fetching on subsequent appearances
-                await ev.action.setSettings({
-                    ...settings,
-                    playlistImage: dataUrl,
-                });
-                return;
-            }
-
-            // Fallback: attempt to set whatever string we have
-            await ev.action.setImage(image);
-        } catch (error) {
-            console.error("Error setting playlist image:", error);
-        }
+    override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<PlaylistSettings>) {
+        await this.updateKeyAppearance(ev.action, ev.payload.settings ?? {});
     }
 
     override async onKeyDown(ev: KeyDownEvent<PlaylistSettings>) {
@@ -154,6 +112,54 @@ export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
                     });
                 }
                 break;
+        }
+    }
+
+    private async updateKeyAppearance(
+        actionContext: WillAppearEvent<PlaylistSettings>["action"],
+        settings: PlaylistSettings,
+    ): Promise<void> {
+        try {
+            if (settings.playlistName) {
+                await actionContext.setTitle(settings.playlistName);
+            }
+
+            const image = settings.playlistImage;
+            if (!image) {
+                return;
+            }
+
+            if (image.startsWith("data:image")) {
+                await actionContext.setImage(image);
+                return;
+            }
+
+            if (image.startsWith("http://") || image.startsWith("https://")) {
+                const response = await fetch(image);
+                if (!response.ok) {
+                    console.error("Failed to fetch playlist image:", response.status, response.statusText);
+                    return;
+                }
+
+                const arrayBuffer = await response.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString("base64");
+                const contentType = response.headers.get("content-type") || "image/jpeg";
+                const dataUrl = `data:${contentType};base64,${base64}`;
+
+                await actionContext.setImage(dataUrl);
+
+                if (settings.playlistImage !== dataUrl) {
+                    await actionContext.setSettings({
+                        ...settings,
+                        playlistImage: dataUrl,
+                    });
+                }
+                return;
+            }
+
+            await actionContext.setImage(image);
+        } catch (error) {
+            console.error("Error setting playlist image:", error);
         }
     }
 }
