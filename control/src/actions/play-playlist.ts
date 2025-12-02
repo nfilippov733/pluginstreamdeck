@@ -14,15 +14,46 @@ export class PlayPlaylistAction extends SingletonAction<PlaylistSettings> {
     
     override async onWillAppear(ev: WillAppearEvent<PlaylistSettings>) {
         const settings = ev.payload.settings;
-        
+
         // Set button title
         if (settings.playlistName) {
             await ev.action.setTitle(settings.playlistName);
         }
-        
+
         // Set playlist image if available
-        if (settings.playlistImage) {
-            await ev.action.setImage(settings.playlistImage);
+        const image = settings.playlistImage;
+        if (!image) {
+            return;
+        }
+
+        try {
+            // If it's already a data URL, use it directly
+            if (image.startsWith("data:image")) {
+                await ev.action.setImage(image);
+                return;
+            }
+
+            // If it's an HTTP(S) URL from Spotify, fetch and convert to base64 data URL
+            if (image.startsWith("http://") || image.startsWith("https://")) {
+                const response = await fetch(image);
+                if (!response.ok) {
+                    console.error("Failed to fetch playlist image:", response.status, response.statusText);
+                    return;
+                }
+
+                const arrayBuffer = await response.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString("base64");
+                const contentType = response.headers.get("content-type") || "image/jpeg";
+                const dataUrl = `data:${contentType};base64,${base64}`;
+
+                await ev.action.setImage(dataUrl);
+                return;
+            }
+
+            // Fallback: attempt to set whatever string we have
+            await ev.action.setImage(image);
+        } catch (error) {
+            console.error("Error setting playlist image:", error);
         }
     }
 
