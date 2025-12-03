@@ -118,6 +118,48 @@
                 }
             ],
             "PropertyInspectorPath": "ui/volume-preset.html"
+        },
+        {
+            "Name": "Volume Dial",
+            "UUID": "com.spotify-macos.control.volume-dial",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Rotate to adjust volume, press to mute/unmute",
+            "Controllers": ["Encoder"],
+            "Encoder": {
+                "layout": "$B1",
+                "TriggerDescription": {
+                    "Rotate": "Adjust volume",
+                    "Push": "Mute/Unmute"
+                }
+            }
+        },
+        {
+            "Name": "Track Dial",
+            "UUID": "com.spotify-macos.control.track-dial",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Rotate to skip tracks, press to play/pause",
+            "Controllers": ["Encoder"],
+            "Encoder": {
+                "layout": "$B1",
+                "TriggerDescription": {
+                    "Rotate": "Next/Previous track",
+                    "Push": "Play/Pause"
+                }
+            }
+        },
+        {
+            "Name": "Seek Dial",
+            "UUID": "com.spotify-macos.control.seek-dial",
+            "Icon": "imgs/actions/counter/icon",
+            "Tooltip": "Rotate to seek in track, press to restart",
+            "Controllers": ["Encoder"],
+            "Encoder": {
+                "layout": "$B1",
+                "TriggerDescription": {
+                    "Rotate": "Seek forward/backward",
+                    "Push": "Restart track"
+                }
+            }
         }
     ]
 }

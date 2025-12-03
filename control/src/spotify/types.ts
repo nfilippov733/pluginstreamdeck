@@ -91,3 +91,20 @@ export interface VolumePresetSettings extends PlaybackActionSettings {
     presetName?: string;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Settings for dial actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface VolumeDialSettings extends PlaybackActionSettings {
+    stepPerTick?: number; // volume change per dial tick, default 2
+    mutedVolume?: number; // stored volume when muted (internal state)
+}
+
+export interface TrackDialSettings extends PlaybackActionSettings {
+    ticksToSkip?: number; // how many ticks needed to trigger skip, default 1
+}
+
+export interface SeekDialSettings extends PlaybackActionSettings {
+    seekMsPerTick?: number; // milliseconds to seek per tick, default 5000 (5s)
+}
+

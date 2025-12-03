@@ -289,3 +289,29 @@ export async function changeVolume(
     await setVolume(clientId, newVolume, deviceId);
 }
 
+/**
+ * Seek to a specific position in the currently playing track.
+ * @param positionMs Position in milliseconds to seek to.
+ */
+export async function seekToPosition(
+    clientId: string,
+    positionMs: number,
+    deviceId?: string
+): Promise<void> {
+    const token = await getAccessToken(clientId);
+    const clamped = Math.max(0, Math.round(positionMs));
+
+    const url = deviceId
+        ? `${API_BASE}/me/player/seek?position_ms=${clamped}&device_id=${deviceId}`
+        : `${API_BASE}/me/player/seek?position_ms=${clamped}`;
+
+    const response = await fetch(url, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok && response.status !== 204) {
+        throw new Error(`Failed to seek: ${response.status}`);
+    }
+}
+
